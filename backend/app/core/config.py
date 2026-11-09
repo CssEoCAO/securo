@@ -28,6 +28,11 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24  # 24 hours
 
+    # Trusted session bridge for a reverse proxy that already authenticated
+    # the user (see app/api/ratoeira_bridge.py). Empty = bridge off.
+    ratoeira_bridge_secret: SecretStr = SecretStr("")
+    ratoeira_workspace_name: str = "Finanças"
+
     # Pluggy
     pluggy_client_id: str = ""
     pluggy_client_secret: SecretStr = SecretStr("")

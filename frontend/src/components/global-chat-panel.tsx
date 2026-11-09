@@ -314,7 +314,7 @@ export function GlobalChatPanel({ open, onOpenChange }: Props) {
                     'No agent available. Create one in the Agents page to enable the global chat.',
                   )}
                 </span>
-                <a href="/agents" className="underline text-foreground">
+                <a href={`${import.meta.env.BASE_URL}agents`} className="underline text-foreground">
                   {t('agents.globalChat.openAgents', 'Go to Agents')}
                 </a>
               </div>

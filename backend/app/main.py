@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.ratoeira_bridge import router as ratoeira_bridge_router
 from app.api.accounts import router as accounts_router
 from app.api.budgets import router as budgets_router
 from app.api.goals import router as goals_router
@@ -210,6 +211,7 @@ app.include_router(workspaces_router)
 app.include_router(access_tokens_router)
 app.include_router(admin_router)
 app.include_router(info_router)
+app.include_router(ratoeira_bridge_router)
 
 
 # Optional agents/MCP/LLM module — fully gated by AGENTS_ENABLED so users

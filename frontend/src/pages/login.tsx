@@ -202,7 +202,7 @@ export default function LoginPage() {
 
   const handleOIDCLogin = () => {
     conditionalPasskeyAbortRef.current?.abort()
-    window.location.href = '/api/auth/oidc/login'
+    window.location.href = `${import.meta.env.BASE_URL}api/auth/oidc/login`
   }
 
   const handlePasskeyLogin = async () => {

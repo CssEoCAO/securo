@@ -36,10 +36,11 @@ export async function streamChat(opts: SendMessageOptions): Promise<void> {
   const workspaceId = localStorage.getItem(WORKSPACE_STORAGE_KEY) || ''
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'X-Securo-App': '1',
     Authorization: token ? `Bearer ${token}` : '',
   }
   if (workspaceId) headers['X-Workspace-Id'] = workspaceId
-  const res = await fetch(`/api/agents/${opts.agentId}/chat`, {
+  const res = await fetch(`${import.meta.env.BASE_URL}api/agents/${opts.agentId}/chat`, {
     method: 'POST',
     signal: opts.signal,
     headers,

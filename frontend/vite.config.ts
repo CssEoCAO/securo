@@ -21,6 +21,8 @@ export default defineConfig(async ({ mode }) => {
   )
 
   return {
+    // Serve under a sub-path (e.g. `/securo/` behind a reverse proxy).
+    base: env.VITE_BASE_PATH || process.env.VITE_BASE_PATH || '/',
     define: {
       __APP_VERSION__: JSON.stringify(appVersion),
     },

@@ -81,7 +81,7 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <CrossTabRefresh />
         <TooltipProvider>
-        <BrowserRouter>
+        <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
           <AuthProvider>
             <WorkspaceProvider>
             <Suspense fallback={<LoadingFallback />}>

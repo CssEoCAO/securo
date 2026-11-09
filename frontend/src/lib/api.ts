@@ -112,8 +112,16 @@ import type {
   ReconciliationHistoryEvent,
 } from '@/types'
 
+// Base path the app is served under (Vite `base`, e.g. `/securo/` behind
+// the Ratoeira gateway). `/` in a stock deploy.
+export const BASE_PATH = import.meta.env.BASE_URL
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: `${BASE_PATH}api`,
+  // Marks every request as coming from this app's own UI. A reverse proxy
+  // that authenticates by header (the Ratoeira gateway) requires it on
+  // writes, so a form on another site can't ride the session.
+  headers: { 'X-Securo-App': '1' },
 })
 export { api }
 
@@ -141,7 +149,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token')
-      window.location.href = '/login'
+      window.location.href = `${BASE_PATH}login`
     }
     return Promise.reject(error)
   }
