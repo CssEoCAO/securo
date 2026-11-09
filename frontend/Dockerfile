@@ -27,4 +27,12 @@ COPY default.conf.template /etc/nginx/templates/default.conf.template
 ENV NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1
 COPY --chmod=755 docker-entrypoint.d/19-resolver.envsh /docker-entrypoint.d/
 
+# The classic builder ignores --chmod, and a checkout made under a restrictive
+# umask leaves these unreadable to nginx's unprivileged user. Normalize here.
+USER root
+RUN chmod 644 /etc/nginx/templates/default.conf.template \
+    && chmod 755 /docker-entrypoint.d/19-resolver.envsh \
+    && chmod -R a+rX /usr/share/nginx/html
+USER 101
+
 EXPOSE 8080
