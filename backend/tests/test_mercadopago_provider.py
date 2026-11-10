@@ -116,3 +116,21 @@ async def test_transactions_mapping(monkeypatch):
         ("credit", Decimal("10"), "Cashback"),
     ]
     assert all(t.external_id.startswith("mp:") for t in txs)
+
+
+@pytest.mark.asyncio
+async def test_import_from_skips_older_rows(monkeypatch):
+    now = datetime.now(BRT)
+    rows = [_row(now - timedelta(days=5), "10", source="old"), _row(now, "20", source="new")]
+    monkeypatch.setattr(MercadoPagoProvider, "_token", staticmethod(lambda c: "APP_USR-x"))
+
+    async def fake_rows(self, token, begin, end):
+        return rows
+
+    async def no_lookup(self, token, source_id):
+        return None
+
+    monkeypatch.setattr(MercadoPagoProvider, "_report_rows", fake_rows)
+    monkeypatch.setattr(MercadoPagoProvider, "_payment_description", no_lookup)
+    txs = await MercadoPagoProvider().get_transactions({"import_from": now.date().isoformat()}, "mp-1", None)
+    assert [t.amount for t in txs] == [Decimal("20")]

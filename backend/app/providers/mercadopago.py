@@ -348,11 +348,16 @@ class MercadoPagoProvider(BankProvider):
         else:
             rows = await self._report_rows(token, begin, today)
 
+        # History before this date lives elsewhere (e.g. merged in from a
+        # previous aggregator connection): never re-import it.
+        import_from = (credentials or {}).get("import_from")
         out: list[TransactionData] = []
         lookups = 0
         for row in rows:
             ts = _parse_ts(row.get("TRANSACTION_DATE", ""))
             if ts is None:
+                continue
+            if import_from and ts.astimezone(timezone(timedelta(hours=-3))).date().isoformat() < import_from:
                 continue
             amount = row_amount(row)
             if amount == 0:
