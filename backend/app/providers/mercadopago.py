@@ -301,7 +301,7 @@ class MercadoPagoProvider(BankProvider):
     def _account(self, credentials: dict) -> AccountData:
         return AccountData(
             external_id=f"mp-{credentials.get('user_id')}",
-            name=f"Mercado Pago ({credentials.get('nickname')})",
+            name="Mercado Pago",
             type="checking",
             balance=_dec(credentials.get("balance")),
             currency="BRL",
