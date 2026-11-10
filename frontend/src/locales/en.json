@@ -1342,7 +1342,15 @@
       },
       "reconnectTitle": "Reconnect with a fresh token",
       "reconnectDescription": "Paste a new setup token to refresh this connection in place. Existing accounts, transactions, categories, and rules are preserved.",
-      "reconnect": "Reconnect"
+      "reconnect": "Reconnect",
+      "mercadopago": {
+        "title": "Connect Mercado Pago",
+        "description": "Reads your account movements from Mercado Pago's own API, no aggregator. In the developers panel, open your application › Production credentials and copy the Access Token.",
+        "openBridge": "Open the developers panel",
+        "tokenLabel": "Access Token and current balance",
+        "tokenPlaceholder": "APP_USR-…  1234.56",
+        "tokenHelp": "Paste the production Access Token and, after a space, the account's current balance (Mercado Pago's API does not report it). The token is stored encrypted."
+      }
     },
     "providers": {
       "pluggy": {
@@ -1353,6 +1361,9 @@
       },
       "simplefin": {
         "description": "US and international banks via SimpleFIN Bridge"
+      },
+      "mercadopago": {
+        "description": "Mercado Pago account via its own API (access token)"
       }
     },
     "reconnected": "Bank reconnected successfully",

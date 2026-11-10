@@ -1346,7 +1346,15 @@
       },
       "reconnectTitle": "Reconectar com um novo token",
       "reconnectDescription": "Cole um novo token de configuração para atualizar esta conexão no lugar. Contas, transações, categorias e regras existentes são preservadas.",
-      "reconnect": "Reconectar"
+      "reconnect": "Reconectar",
+      "mercadopago": {
+        "title": "Conectar Mercado Pago",
+        "description": "Lê os movimentos da tua conta pela API do próprio Mercado Pago, sem agregador. No painel de desenvolvedores, abre tua aplicação › Credenciais de produção e copia o Access Token.",
+        "openBridge": "Abrir o painel de desenvolvedores",
+        "tokenLabel": "Access Token e saldo atual",
+        "tokenPlaceholder": "APP_USR-…  1234,56",
+        "tokenHelp": "Cola o Access Token de produção e, depois de um espaço, o saldo atual da conta (a API do Mercado Pago não informa saldo). O token fica guardado criptografado."
+      }
     },
     "providers": {
       "pluggy": {
@@ -1357,6 +1365,9 @@
       },
       "simplefin": {
         "description": "Bancos dos EUA e internacionais via SimpleFIN Bridge"
+      },
+      "mercadopago": {
+        "description": "Conta Mercado Pago pela API própria (Access Token)"
       }
     },
     "reconnected": "Banco reconectado com sucesso",

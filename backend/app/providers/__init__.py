@@ -41,6 +41,14 @@ KNOWN_PROVIDERS = [
         "requires_institution_select": False,
         "supports_asset_sync": True,
     },
+    {
+        "name": "mercadopago",
+        "display_name": "Mercado Pago",
+        "description": "Mercado Pago account via its own API (access token)",
+        "flow_type": "token",
+        "requires_institution_select": False,
+        "supports_asset_sync": False,
+    },
 ]
 
 
@@ -93,6 +101,10 @@ def _auto_register_providers() -> None:
     if settings.simplefin_enabled:
         from app.providers.simplefin import SimpleFinProvider
         register_provider("simplefin", SimpleFinProvider)
+
+    if settings.mercadopago_enabled:
+        from app.providers.mercadopago import MercadoPagoProvider
+        register_provider("mercadopago", MercadoPagoProvider)
 
 
 _auto_register_providers()

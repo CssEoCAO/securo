@@ -27,6 +27,7 @@ interface TokenConnectDialogProps {
 
 const PROVIDER_BRIDGE_URLS: Record<string, string> = {
   simplefin: 'https://bridge.simplefin.org/simplefin/create',
+  mercadopago: 'https://www.mercadopago.com.br/developers/panel',
 }
 
 export function TokenConnectDialog({
@@ -118,7 +119,7 @@ export function TokenConnectDialog({
         {bridgeUrl && (
           <Button asChild variant="outline" className="w-full justify-between">
             <a href={bridgeUrl} target="_blank" rel="noreferrer">
-              <span>{t('accounts.tokenConnect.openBridge')}</span>
+              <span>{t(`${i18nKey}.openBridge`, t('accounts.tokenConnect.openBridge'))}</span>
               <ExternalLink size={14} />
             </a>
           </Button>
@@ -145,12 +146,12 @@ export function TokenConnectDialog({
 
         <div className="space-y-1.5">
           <label className="text-sm font-medium" htmlFor="securo-token-input">
-            {t('accounts.tokenConnect.tokenLabel')}
+            {t(`${i18nKey}.tokenLabel`, t('accounts.tokenConnect.tokenLabel'))}
           </label>
           <textarea
             id="securo-token-input"
             className="w-full min-h-[110px] rounded-md border border-input bg-card px-3 py-2 text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0"
-            placeholder={t('accounts.tokenConnect.tokenPlaceholder')}
+            placeholder={t(`${i18nKey}.tokenPlaceholder`, t('accounts.tokenConnect.tokenPlaceholder'))}
             value={token}
             onChange={(e) => setToken(e.target.value)}
             spellCheck={false}
@@ -160,7 +161,7 @@ export function TokenConnectDialog({
           <p className="text-xs text-muted-foreground">
             {submitting && !isReconnect
               ? t('accounts.oauthCallback.linking')
-              : t('accounts.tokenConnect.tokenHelp')}
+              : t(`${i18nKey}.tokenHelp`, t('accounts.tokenConnect.tokenHelp'))}
           </p>
         </div>
 

@@ -55,6 +55,8 @@ class Settings(BaseSettings):
     # The bridge URL defaults to the beta/sandbox host so users can test with
     # the demo token; flip to https://bridge.simplefin.org for production.
     simplefin_enabled: bool = False
+    # Mercado Pago (paste-a-token: production Access Token + current balance).
+    mercadopago_enabled: bool = False
     simplefin_api_url: str = "https://beta-bridge.simplefin.org"
 
     # Frontend
