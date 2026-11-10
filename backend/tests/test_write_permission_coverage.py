@@ -56,6 +56,7 @@ ALLOWLIST: dict[tuple[str, str], str] = {
     ("PATCH", "/{id}"): "fastapi-users' own user router, superuser-gated",
     ("DELETE", "/{id}"): "fastapi-users' own user router, superuser-gated",
     ("POST", "/api/setup/create-admin"): "first-run bootstrap, refuses once a user exists",
+    ("POST", "/api/ratoeira/session"): "trusted-proxy login: off without RATOEIRA_BRIDGE_SECRET, checks the shared secret in constant time; the proxy already authenticated the person",
     # Instance administration: gated by `current_superuser`, not by workspace.
     ("POST", "/api/admin/users"): "superuser-gated instance administration",
     ("PATCH", "/api/admin/users/{user_id}"): "superuser-gated instance administration",
@@ -111,6 +112,7 @@ PUBLIC_ROUTES = {
         "/login", "/logout", "/register", "/forgot-password", "/reset-password",
         "/2fa/verify", "/passkeys/authenticate/options", "/passkeys/authenticate/verify",
         "/passkeys/2fa/options", "/passkeys/2fa/verify", "/api/setup/create-admin",
+        "/api/ratoeira/session",
     )
 }
 WORKSPACE_READ_ROUTES = {

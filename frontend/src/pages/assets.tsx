@@ -168,7 +168,11 @@ function assetTypeFromQuoteType(quoteType: string | null | undefined): string {
       return 'investment'
   }
 }
-const VALUATION_METHODS = ['manual', 'growth_rule', 'market_price'] as const
+const VALUATION_METHODS = ['manual', 'growth_rule', 'market_price', 'fixed_income'] as const
+const FI_INDEXES = ['prefixado', 'cdi', 'ipca'] as const
+const FI_PAYMENTS = ['maturity', 'monthly', 'quarterly', 'semiannual', 'yearly'] as const
+const FI_TAXES = ['regressiva', 'isento', 'fixa'] as const
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 const GROWTH_TYPES = ['percentage', 'absolute'] as const
 const GROWTH_FREQUENCIES = ['daily', 'weekly', 'monthly', 'yearly'] as const
 
@@ -245,6 +249,14 @@ export default function AssetsPage() {
   const [formGrowthRate, setFormGrowthRate] = useState('')
   const [formGrowthFrequency, setFormGrowthFrequency] = useState<string>('monthly')
   const [formGrowthStartDate, setFormGrowthStartDate] = useState<string>('')
+  // Fixed-income form state
+  const [formFiIndex, setFormFiIndex] = useState<string>('prefixado')
+  const [formFiRate, setFormFiRate] = useState('')
+  const [formFiPayment, setFormFiPayment] = useState<string>('maturity')
+  const [formFiTax, setFormFiTax] = useState<string>('regressiva')
+  const [formFiTaxRate, setFormFiTaxRate] = useState('')
+  const [formFiPayout, setFormFiPayout] = useState<string>('')
+  const [formMaturity, setFormMaturity] = useState<string>('')
   // Market-price form state
   const [formTickerQuery, setFormTickerQuery] = useState('')
   const [tickerMatches, setTickerMatches] = useState<MarketSymbolMatch[]>([])
@@ -608,6 +620,13 @@ export default function AssetsPage() {
     setFormGrowthRate('')
     setFormGrowthFrequency('monthly')
     setFormGrowthStartDate('')
+    setFormFiIndex('prefixado')
+    setFormFiRate('')
+    setFormFiPayment('maturity')
+    setFormFiTax('regressiva')
+    setFormFiTaxRate('')
+    setFormFiPayout('')
+    setFormMaturity('')
     resetMarketPriceForm()
     setDialogOpen(true)
   }
@@ -628,6 +647,13 @@ export default function AssetsPage() {
     setFormGrowthRate(asset.growth_rate?.toString() ?? '')
     setFormGrowthFrequency(asset.growth_frequency ?? 'monthly')
     setFormGrowthStartDate(asset.growth_start_date ?? '')
+    setFormFiIndex(asset.fi_index ?? 'prefixado')
+    setFormFiRate(asset.fi_rate?.toString() ?? '')
+    setFormFiPayment(asset.fi_payment ?? 'maturity')
+    setFormFiTax(asset.fi_tax ?? 'regressiva')
+    setFormFiTaxRate(asset.fi_tax_rate?.toString() ?? '')
+    setFormFiPayout(asset.fi_payout_account_id ?? '')
+    setFormMaturity(asset.maturity_date ?? '')
     resetMarketPriceForm()
     if (asset.valuation_method === 'market_price' && asset.ticker) {
       setFormTickerQuery(asset.ticker)
@@ -677,8 +703,11 @@ export default function AssetsPage() {
     // these fields untouched instead of clearing them.
     if (!isMarket) {
       payload.purchase_price = formPurchasePrice ? parseFloat(formPurchasePrice) : null
-      payload.sell_date = formSellDate || null
-      payload.sell_price = formSellPrice ? parseFloat(formSellPrice) : null
+      // Fixed income closes itself at maturity: sale fields are computed.
+      if (formMethod !== 'fixed_income') {
+        payload.sell_date = formSellDate || null
+        payload.sell_price = formSellPrice ? parseFloat(formSellPrice) : null
+      }
     } else if (!editingAsset) {
       payload.purchase_price = null
       payload.sell_date = null
@@ -690,6 +719,16 @@ export default function AssetsPage() {
       payload.growth_rate = formGrowthRate ? parseFloat(formGrowthRate) : null
       payload.growth_frequency = formGrowthFrequency
       payload.growth_start_date = formGrowthStartDate || null
+    }
+
+    if (formMethod === 'fixed_income') {
+      payload.fi_index = formFiIndex
+      payload.fi_rate = formFiRate ? parseFloat(formFiRate) : null
+      payload.fi_payment = formFiPayment
+      payload.fi_tax = formFiTax
+      payload.fi_tax_rate = formFiTax === 'fixa' && formFiTaxRate ? parseFloat(formFiTaxRate) : null
+      payload.fi_payout_account_id = formFiPayout || null
+      payload.maturity_date = formMaturity || null
     }
 
     if (isMarket) {
@@ -812,7 +851,25 @@ export default function AssetsPage() {
                   <Badge variant="outline" className="text-[9px] px-1 py-0 text-sky-600 border-sky-200">{t('assets.synced')}</Badge>
                 )}
               </div>
+              {asset.valuation_method === 'fixed_income' && asset.fixed_income ? (
+                <span
+                  className="text-[11px] text-muted-foreground truncate block"
+                  title={t('assets.fixedIncome.summaryTitle', {
+                    gross: formatCurrency(parseFloat(asset.fixed_income.gross_value), asset.currency, locale),
+                    ir: formatCurrency(parseFloat(asset.fixed_income.ir), asset.currency, locale),
+                    paid: formatCurrency(parseFloat(asset.fixed_income.paid_net), asset.currency, locale),
+                  })}
+                >
+                  {asset.fi_index === 'cdi' ? `${asset.fi_rate}% CDI` : asset.fi_index === 'ipca' ? `IPCA + ${asset.fi_rate}%` : `${asset.fi_rate}% a.a.`}
+                  {' · '}{t(`assets.fixedIncome.payment${cap(asset.fi_payment ?? 'maturity')}`)}
+                  {asset.fixed_income.matured
+                    ? ` · ${t('assets.fixedIncome.matured')}`
+                    : ` · IR ${mask(formatCurrency(parseFloat(asset.fixed_income.ir), asset.currency, locale))}`}
+                  {asset.fixed_income.next_payment ? ` · ${t('assets.fixedIncome.next')} ${asset.fixed_income.next_payment.split('-').reverse().join('/')}` : ''}
+                </span>
+              ) : (
               <span className="text-[11px] text-muted-foreground truncate block">{asset.ticker && !asset.ticker.startsWith('TD:') ? asset.name : (asset.ticker?.startsWith('TD:') ? 'Tesouro Direto' : t(`assets.type${asset.type.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase()).replace(/^./, c => c.toUpperCase())}`))}</span>
+              )}
             </div>
           </div>
           {/* Quant. */}
@@ -1306,7 +1363,7 @@ export default function AssetsPage() {
             {/* Valuation Method — locked on edit */}
             <div className="space-y-2">
               <Label>{t('assets.valuationMethod')}</Label>
-              <div className="grid gap-2 grid-cols-3">
+              <div className="grid gap-2 grid-cols-2 sm:grid-cols-4">
                 {VALUATION_METHODS.map(m => (
                   <button
                     key={m}
@@ -1319,7 +1376,9 @@ export default function AssetsPage() {
                     } ${editingAsset ? 'opacity-50 cursor-not-allowed' : ''}`}
                     onClick={() => !editingAsset && setFormMethod(m)}
                   >
-                    {m === 'market_price'
+                    {m === 'fixed_income'
+                      ? t('assets.fixedIncome.method')
+                      : m === 'market_price'
                       ? t('assets.marketPrice')
                       : m === 'growth_rule'
                         ? t('assets.growthRule')
@@ -1537,17 +1596,77 @@ export default function AssetsPage() {
               </div>
             )}
 
+            {/* Fixed income: index, rate, payments, IR, maturity, payout account */}
+            {formMethod === 'fixed_income' && (
+              <div className="space-y-3 p-3.5 rounded-xl border border-primary/20 bg-primary/5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>{t('assets.fixedIncome.index')}</Label>
+                    <select className="bg-card border border-border focus:outline-none focus:ring-2 focus:ring-primary px-3 py-2 rounded-lg text-foreground text-sm w-full" value={formFiIndex} onChange={e => setFormFiIndex(e.target.value)}>
+                      {FI_INDEXES.map(x => <option key={x} value={x}>{t(`assets.fixedIncome.index${cap(x)}`)}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t(`assets.fixedIncome.rate${cap(formFiIndex)}`)}</Label>
+                    <div className="relative">
+                      <Input type="number" step="any" value={formFiRate} onChange={e => setFormFiRate(e.target.value)} className="pr-8" />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">%</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>{t('assets.fixedIncome.payment')}</Label>
+                    <select className="bg-card border border-border focus:outline-none focus:ring-2 focus:ring-primary px-3 py-2 rounded-lg text-foreground text-sm w-full" value={formFiPayment} onChange={e => setFormFiPayment(e.target.value)}>
+                      {FI_PAYMENTS.map(x => <option key={x} value={x}>{t(`assets.fixedIncome.payment${cap(x)}`)}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t('assets.fixedIncome.maturity')}</Label>
+                    <DatePickerInput value={formMaturity} onChange={setFormMaturity} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>{t('assets.fixedIncome.tax')}</Label>
+                    <select className="bg-card border border-border focus:outline-none focus:ring-2 focus:ring-primary px-3 py-2 rounded-lg text-foreground text-sm w-full" value={formFiTax} onChange={e => setFormFiTax(e.target.value)}>
+                      {FI_TAXES.map(x => <option key={x} value={x}>{t(`assets.fixedIncome.tax${cap(x)}`)}</option>)}
+                    </select>
+                  </div>
+                  {formFiTax === 'fixa' && (
+                    <div className="space-y-2">
+                      <Label>{t('assets.fixedIncome.taxRate')}</Label>
+                      <div className="relative">
+                        <Input type="number" step="any" value={formFiTaxRate} onChange={e => setFormFiTaxRate(e.target.value)} className="pr-8" />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">%</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('assets.fixedIncome.payoutAccount')}</Label>
+                  <select className="bg-card border border-border focus:outline-none focus:ring-2 focus:ring-primary px-3 py-2 rounded-lg text-foreground text-sm w-full" value={formFiPayout} onChange={e => setFormFiPayout(e.target.value)}>
+                    <option value="">{t('assets.fixedIncome.payoutNone')}</option>
+                    {(accountsList ?? []).filter(a => !a.connection_id && !a.is_closed).map(a => (
+                      <option key={a.id} value={a.id}>{a.display_name || a.name}</option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-muted-foreground">{t('assets.fixedIncome.payoutHint')}</p>
+                </div>
+              </div>
+            )}
+
             {/* Purchase Info. For tickers the cost comes from the unit-price
                 buy above, so we only ask for the purchase (buy) date here and
                 hide the total-price field. Manual assets keep both. */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>{t('assets.purchaseDate')}</Label>
+                <Label>{formMethod === 'fixed_income' ? t('assets.fixedIncome.startDate') : t('assets.purchaseDate')}</Label>
                 <DatePickerInput value={formPurchaseDate} onChange={setFormPurchaseDate} disabled={editingIsLedgerBacked} />
               </div>
               {formMethod !== 'market_price' && (
                 <div className="space-y-2">
-                  <Label>{t('assets.purchasePrice')}</Label>
+                  <Label>{formMethod === 'fixed_income' ? t('assets.fixedIncome.principal') : t('assets.purchasePrice')}</Label>
                   <Input type="number" step="0.01" value={formPurchasePrice} onChange={e => setFormPurchasePrice(e.target.value)} />
                 </div>
               )}
@@ -1555,7 +1674,7 @@ export default function AssetsPage() {
 
             {/* Sell Info — manual assets only. Tickers record sells through the
                 buy/sell ledger, not the create form. */}
-            {formMethod !== 'market_price' && (
+            {formMethod !== 'market_price' && formMethod !== 'fixed_income' && (
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>{t('assets.sellDate')}</Label>
@@ -1617,6 +1736,11 @@ export default function AssetsPage() {
                 || (formMethod === 'market_price'
                   && !editingAsset
                   && (!selectedQuote || !formUnits || parseFloat(formUnits) <= 0))
+                // Fixed income: principal, start date, rate; periodic payments need a maturity.
+                || (formMethod === 'fixed_income'
+                  && (!formPurchasePrice || !formPurchaseDate || formFiRate === ''
+                    || (formFiPayment !== 'maturity' && !formMaturity)
+                    || (formFiTax === 'fixa' && formFiTaxRate === '')))
               }
             >
               {t('common.save')}

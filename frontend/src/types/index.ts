@@ -995,6 +995,24 @@ export interface Asset {
   total_invested: number | null
   realized_gain: number | null
   transaction_count: number
+  // Fixed income (valuation_method "fixed_income")
+  fi_index?: 'prefixado' | 'cdi' | 'ipca' | null
+  fi_rate?: number | null
+  fi_payment?: 'maturity' | 'monthly' | 'quarterly' | 'semiannual' | 'yearly' | null
+  fi_tax?: 'regressiva' | 'isento' | 'fixa' | null
+  fi_tax_rate?: number | null
+  fi_payout_account_id?: string | null
+  fixed_income?: {
+    as_of: string
+    gross_value: string
+    ir: string
+    ir_rate: string
+    net_value: string
+    paid_net: string
+    payments: number
+    next_payment: string | null
+    matured: boolean
+  } | null
 }
 
 /** One order read from a broker CSV, before it reaches a holding. */
