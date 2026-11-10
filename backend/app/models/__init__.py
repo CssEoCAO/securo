@@ -17,6 +17,7 @@ from app.models.asset_group import AssetGroup
 from app.models.asset_transaction import AssetTransaction
 from app.models.asset_value import AssetValue
 from app.models.fx_rate import FxRate
+from app.models.index_rate import IndexRate
 from app.models.transaction_attachment import TransactionAttachment
 from app.models.payee import Payee, PayeeMapping, PayeeTaxId
 from app.models.app_settings import AppSetting

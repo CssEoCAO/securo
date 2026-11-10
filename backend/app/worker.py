@@ -38,6 +38,11 @@ celery_app.conf.beat_schedule = {
         "task": "app.tasks.asset_tasks.apply_asset_growth_rules",
         "schedule": 60 * 60,  # every hour; idempotent (checks last value date)
     },
+    "apply-fixed-income": {
+        "task": "app.tasks.asset_tasks.apply_fixed_income",
+        # Revalues renda fixa and posts due coupons/redemptions; idempotent.
+        "schedule": 60 * 60 * 6,
+    },
     "refresh-market-prices-daily": {
         "task": "app.tasks.asset_tasks.refresh_market_prices",
         # Once a day is enough for personal portfolio tracking — keeps us

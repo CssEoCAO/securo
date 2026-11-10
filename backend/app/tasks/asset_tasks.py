@@ -190,3 +190,22 @@ def refresh_market_prices() -> dict:
         result.get("rate_limited", 0),
     )
     return result
+
+
+async def _apply_fixed_income() -> int:
+    from app.services.fixed_income_service import sync_all_fixed_income
+
+    engine, session_maker = _make_session_maker()
+    try:
+        async with session_maker() as session, use_timezone(session, fresh=True):
+            return await sync_all_fixed_income(session)
+    finally:
+        await engine.dispose()
+
+
+@celery_app.task(name="app.tasks.asset_tasks.apply_fixed_income")
+def apply_fixed_income() -> dict:
+    """Celery task: revalue fixed-income assets and post due coupons/redemptions."""
+    done = asyncio.run(_apply_fixed_income())
+    logger.info("Fixed income sync complete: %d assets", done)
+    return {"synced": done}

@@ -106,6 +106,20 @@ class Asset(Base):
     # the type icon". Frontend swaps to the type icon on <img> load error.
     logo_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
 
+    # Fixed income (valuation_method="fixed_income", app/services/fixed_income.py).
+    # purchase_price = principal, purchase_date = start, maturity_date = maturity.
+    fi_index: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)  # prefixado, cdi, ipca
+    fi_rate: Mapped[Optional[Decimal]] = mapped_column(Numeric(precision=12, scale=6), nullable=True)
+    fi_payment: Mapped[Optional[str]] = mapped_column(String(12), nullable=True)  # maturity, monthly, ...
+    fi_tax: Mapped[Optional[str]] = mapped_column(String(12), nullable=True)  # regressiva, isento, fixa
+    fi_tax_rate: Mapped[Optional[Decimal]] = mapped_column(Numeric(precision=6, scale=3), nullable=True)
+    # Manual account that receives coupons and the redemption (optional).
+    fi_payout_account_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("accounts.id", ondelete="SET NULL", use_alter=True, name="fk_assets_fi_payout_account"),
+        nullable=True,
+    )
+
     values: Mapped[list["AssetValue"]] = relationship(back_populates="asset", cascade="all, delete-orphan")
     transactions: Mapped[list["AssetTransaction"]] = relationship(
         back_populates="asset", cascade="all, delete-orphan"

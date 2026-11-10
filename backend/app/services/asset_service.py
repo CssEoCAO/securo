@@ -177,6 +177,13 @@ def _asset_to_read(
         total_invested=total_invested,
         realized_gain=float(asset.realized_gain) if asset.realized_gain is not None else None,
         transaction_count=transaction_count,
+        fi_index=asset.fi_index,
+        fi_rate=float(asset.fi_rate) if asset.fi_rate is not None else None,
+        fi_payment=asset.fi_payment,
+        fi_tax=asset.fi_tax,
+        fi_tax_rate=float(asset.fi_tax_rate) if asset.fi_tax_rate is not None else None,
+        fi_payout_account_id=asset.fi_payout_account_id,
+        fixed_income=(asset.external_metadata or {}).get("fixed_income"),
     )
 
 
@@ -549,7 +556,15 @@ async def create_asset(
         logo_url=quote.logo_url if quote else None,
         external_id=data.external_id,
         source=source,
+        fi_index=data.fi_index if data.valuation_method == "fixed_income" else None,
+        fi_rate=data.fi_rate if data.valuation_method == "fixed_income" else None,
+        fi_payment=data.fi_payment if data.valuation_method == "fixed_income" else None,
+        fi_tax=data.fi_tax if data.valuation_method == "fixed_income" else None,
+        fi_tax_rate=data.fi_tax_rate if data.valuation_method == "fixed_income" else None,
+        fi_payout_account_id=data.fi_payout_account_id if data.valuation_method == "fixed_income" else None,
     )
+    if data.valuation_method == "fixed_income":
+        await _check_fixed_income(session, workspace_id, asset)
     session.add(asset)
     try:
         await session.flush()
@@ -651,6 +666,9 @@ async def create_asset(
         await session.flush()
         await asset_transaction_service.recompute_and_cache(session, asset)
 
+    if data.valuation_method == "fixed_income":
+        await _sync_fixed_income(session, asset)
+
     # Stamp purchase_price_primary
     if asset.purchase_price is not None:
         await stamp_primary_amount(
@@ -669,6 +687,25 @@ async def create_asset(
         select(func.count()).select_from(AssetTransaction).where(AssetTransaction.asset_id == asset.id)
     )
     return _asset_to_read(asset, latest, count, tx_count or 0)
+
+
+async def _check_fixed_income(session: AsyncSession, workspace_id: uuid.UUID, asset: Asset) -> None:
+    from app.services.fixed_income_service import FixedIncomeError, params_of, validate_payout_account
+
+    try:
+        params_of(asset)
+        await validate_payout_account(session, workspace_id, asset.fi_payout_account_id)
+    except FixedIncomeError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)) from exc
+
+
+async def _sync_fixed_income(session: AsyncSession, asset: Asset) -> None:
+    from app.services.fixed_income_service import FixedIncomeError, sync_fixed_income_asset
+
+    try:
+        await sync_fixed_income_asset(session, asset)
+    except FixedIncomeError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)) from exc
 
 
 # Fields a ledger-backed holding derives from its transactions (see
@@ -760,6 +797,10 @@ async def update_asset(
             )
             for v in backfill:
                 session.add(v)
+
+    if asset.valuation_method == "fixed_income":
+        await _check_fixed_income(session, workspace_id, asset)
+        await _sync_fixed_income(session, asset)
 
     # Re-stamp purchase_price_primary if purchase_price or currency changed
     if "purchase_price" in update_data or "currency" in update_data:

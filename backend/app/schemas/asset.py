@@ -1,7 +1,7 @@
 import uuid
 from datetime import date as _date, datetime
 from decimal import Decimal
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
@@ -34,6 +34,14 @@ class AssetCreate(BaseModel):
     # médio model, consistent with the transaction ledger). When omitted, the
     # service seeds the buy at the live quote ("bought at market now").
     unit_price: Optional[Decimal] = None
+    # Fixed income (valuation_method="fixed_income"): purchase_price is the
+    # principal, purchase_date the start, maturity_date the maturity.
+    fi_index: Optional[Literal["prefixado", "cdi", "ipca"]] = None
+    fi_rate: Optional[Decimal] = None
+    fi_payment: Optional[Literal["maturity", "monthly", "quarterly", "semiannual", "yearly"]] = None
+    fi_tax: Optional[Literal["regressiva", "isento", "fixa"]] = None
+    fi_tax_rate: Optional[Decimal] = None
+    fi_payout_account_id: Optional[uuid.UUID] = None
 
     @field_validator("external_id")
     @classmethod
@@ -70,6 +78,15 @@ class AssetUpdate(BaseModel):
     group_id: Optional[uuid.UUID] = None
     ticker: Optional[str] = None
     ticker_exchange: Optional[str] = None
+    maturity_date: Optional[_date] = None
+    # Fixed income (valuation_method="fixed_income"): purchase_price is the
+    # principal, purchase_date the start, maturity_date the maturity.
+    fi_index: Optional[Literal["prefixado", "cdi", "ipca"]] = None
+    fi_rate: Optional[Decimal] = None
+    fi_payment: Optional[Literal["maturity", "monthly", "quarterly", "semiannual", "yearly"]] = None
+    fi_tax: Optional[Literal["regressiva", "isento", "fixa"]] = None
+    fi_tax_rate: Optional[Decimal] = None
+    fi_payout_account_id: Optional[uuid.UUID] = None
 
 
 class AssetRead(BaseModel):
@@ -114,6 +131,14 @@ class AssetRead(BaseModel):
     total_invested: Optional[float] = None
     realized_gain: Optional[float] = None
     transaction_count: int = 0
+    fi_index: Optional[str] = None
+    fi_rate: Optional[float] = None
+    fi_payment: Optional[str] = None
+    fi_tax: Optional[str] = None
+    fi_tax_rate: Optional[float] = None
+    fi_payout_account_id: Optional[uuid.UUID] = None
+    # gross_value, ir, ir_rate, net_value, paid_net, payments, next_payment, matured
+    fixed_income: Optional[dict] = None
 
     model_config = ConfigDict(from_attributes=True)
 
